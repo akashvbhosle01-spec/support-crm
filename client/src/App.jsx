@@ -1,8 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-function Home() {
-  return <div className="p-8">Home page — coming in Step 7</div>;
-}
+import Home from "./pages/Home";
 
 function Create() {
   return <div className="p-8">Create ticket — coming in Step 8</div>;
