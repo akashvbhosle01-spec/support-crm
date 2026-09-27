@@ -3,11 +3,13 @@ import { Link, useParams } from "react-router-dom";
 import api from "../api/axios";
 import Loader from "../components/Loader";
 import StatusBadge from "../components/StatusBadge";
+import PriorityBadge from "../components/PriorityBadge";
+import OverdueBadge from "../components/OverdueBadge";
 import NotesTimeline from "../components/NotesTimeline";
 import { formatDateTime } from "../utils/formatDate";
 
 export default function TicketDetail() {
-  const { id } = useParams(); // URL se ticket_id
+  const { id } = useParams();
 
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,7 @@ export default function TicketDetail() {
       setTicket(res.data);
     } catch (err) {
       console.error(err);
+
       if (err.response?.status === 404) {
         setNotFound(true);
       } else {
@@ -53,7 +56,6 @@ export default function TicketDetail() {
 
       await api.put(`/tickets/${id}`, { status: newStatus });
 
-      // Optimistic update on frontend
       setTicket((prev) => ({
         ...prev,
         status: newStatus,
@@ -61,6 +63,7 @@ export default function TicketDetail() {
       }));
     } catch (err) {
       console.error(err);
+
       setActionError(
         err.response?.data?.error || "Failed to update status."
       );
@@ -71,19 +74,22 @@ export default function TicketDetail() {
 
   const handleAddNote = async (e) => {
     e.preventDefault();
+
     if (!noteText.trim()) return;
 
     try {
       setNoteSubmitting(true);
       setActionError("");
 
-      await api.put(`/tickets/${id}`, { notes: noteText.trim() });
+      await api.put(`/tickets/${id}`, {
+        notes: noteText.trim(),
+      });
 
-      // Refresh to get the updated notes list with server timestamps
       await fetchTicket();
       setNoteText("");
     } catch (err) {
       console.error(err);
+
       setActionError(
         err.response?.data?.error || "Failed to add note."
       );
@@ -107,13 +113,16 @@ export default function TicketDetail() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
+
         <main className="max-w-3xl mx-auto px-4 py-16 text-center">
           <h2 className="text-xl font-semibold text-gray-800">
             Ticket not found
           </h2>
+
           <p className="text-sm text-gray-500 mt-2">
             The ticket you're looking for doesn't exist or was removed.
           </p>
+
           <Link
             to="/"
             className="inline-block mt-5 text-sm text-blue-600 hover:text-blue-700 font-medium"
@@ -130,8 +139,10 @@ export default function TicketDetail() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
+
         <main className="max-w-3xl mx-auto px-4 py-16 text-center">
           <p className="text-red-600 text-sm">{error}</p>
+
           <button
             onClick={fetchTicket}
             className="mt-5 text-sm text-blue-600 hover:text-blue-700 font-medium"
@@ -150,6 +161,7 @@ export default function TicketDetail() {
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 py-6">
+
         {/* Action error banner */}
         {actionError && (
           <div className="mb-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
@@ -160,23 +172,34 @@ export default function TicketDetail() {
         {/* Ticket header card */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+
             <div className="min-w-0">
               <p className="font-mono text-xs text-blue-600 mb-1">
                 {ticket.ticket_id}
               </p>
+
               <h1 className="text-xl font-bold text-gray-800 break-words">
                 {ticket.subject}
               </h1>
+
               <p className="text-xs text-gray-500 mt-2">
                 Created {formatDateTime(ticket.created_at)}
+
                 {ticket.updated_at !== ticket.created_at && (
-                  <> • Updated {formatDateTime(ticket.updated_at)}</>
+                  <>
+                    {" "}
+                    • Updated {formatDateTime(ticket.updated_at)}
+                  </>
                 )}
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Priority + Status */}
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <PriorityBadge priority={ticket.priority} />
+
               <StatusBadge status={ticket.status} />
+
               <select
                 value={ticket.status}
                 onChange={(e) => handleStatusChange(e.target.value)}
@@ -187,6 +210,7 @@ export default function TicketDetail() {
                 <option value="In Progress">In Progress</option>
                 <option value="Closed">Closed</option>
               </select>
+
               {statusUpdating && (
                 <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               )}
@@ -199,9 +223,11 @@ export default function TicketDetail() {
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
             Customer
           </h2>
+
           <p className="text-sm text-gray-800 font-medium">
             {ticket.customer_name}
           </p>
+
           <a
             href={`mailto:${ticket.customer_email}`}
             className="text-sm text-blue-600 hover:text-blue-700"
@@ -215,9 +241,42 @@ export default function TicketDetail() {
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
             Description
           </h2>
+
           <p className="text-sm text-gray-800 whitespace-pre-wrap">
             {ticket.description}
           </p>
+        </div>
+
+        {/* SLA Info */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mt-4">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            SLA
+          </h2>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+            <div>
+              <p className="text-sm text-gray-800">
+                Due by{" "}
+                <span className="font-medium">
+                  {formatDateTime(ticket.sla_due_at)}
+                </span>
+              </p>
+
+              <p className="text-xs text-gray-500 mt-1">
+                Based on{" "}
+                <span className="font-medium">
+                  {ticket.priority}
+                </span>{" "}
+                priority
+              </p>
+            </div>
+
+            <OverdueBadge
+              isOverdue={ticket.is_overdue}
+              slaDueAt={ticket.sla_due_at}
+            />
+          </div>
         </div>
 
         {/* Notes */}
@@ -237,6 +296,7 @@ export default function TicketDetail() {
               placeholder="Add a note... (e.g. Investigated logs, contacted customer)"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
+
             <div className="flex justify-end mt-2">
               <button
                 type="submit"
@@ -246,11 +306,13 @@ export default function TicketDetail() {
                 {noteSubmitting && (
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 )}
+
                 {noteSubmitting ? "Adding..." : "Add Note"}
               </button>
             </div>
           </form>
         </div>
+
       </main>
     </div>
   );
@@ -260,15 +322,21 @@ function Header() {
   return (
     <header className="bg-white border-b border-gray-200">
       <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-gray-800">
+
+        <Link
+          to="/"
+          className="text-xl font-bold text-gray-800"
+        >
           Support CRM
         </Link>
+
         <Link
           to="/"
           className="text-sm text-gray-600 hover:text-gray-800 transition"
         >
           ← Back to tickets
         </Link>
+
       </div>
     </header>
   );

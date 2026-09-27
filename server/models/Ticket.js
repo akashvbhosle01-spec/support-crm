@@ -7,31 +7,43 @@ const ticketSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+
     customer_name: {
       type: String,
       required: true,
       trim: true,
     },
+
     customer_email: {
       type: String,
       required: true,
       trim: true,
       lowercase: true,
     },
+
     subject: {
       type: String,
       required: true,
       trim: true,
     },
+
     description: {
       type: String,
       required: true,
       trim: true,
     },
+
     status: {
       type: String,
       enum: ["Open", "In Progress", "Closed"],
       default: "Open",
+    },
+
+    // ⭐ NEW: Ticket priority
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High", "Urgent"],
+      default: "Medium",
     },
   },
   { timestamps: true }

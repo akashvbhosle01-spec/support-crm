@@ -10,6 +10,7 @@ export default function CreateTicket() {
     customer_email: "",
     subject: "",
     description: "",
+    priority: "Medium",
   });
 
   const [errors, setErrors] = useState({});
@@ -19,10 +20,18 @@ export default function CreateTicket() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
     // Clear field-specific error as user types
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
     }
   };
 
@@ -32,16 +41,21 @@ export default function CreateTicket() {
     if (!form.customer_name.trim()) {
       newErrors.customer_name = "Customer name is required";
     }
+
     if (!form.customer_email.trim()) {
       newErrors.customer_email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customer_email.trim())) {
+    } else if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customer_email.trim())
+    ) {
       newErrors.customer_email = "Please enter a valid email";
     }
+
     if (!form.subject.trim()) {
       newErrors.subject = "Subject is required";
     } else if (form.subject.trim().length < 3) {
       newErrors.subject = "Subject must be at least 3 characters";
     }
+
     if (!form.description.trim()) {
       newErrors.description = "Description is required";
     } else if (form.description.trim().length < 10) {
@@ -54,6 +68,7 @@ export default function CreateTicket() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setServerError("");
     setSuccess("");
 
@@ -67,6 +82,7 @@ export default function CreateTicket() {
         customer_email: form.customer_email.trim(),
         subject: form.subject.trim(),
         description: form.description.trim(),
+        priority: form.priority,
       });
 
       setSuccess(`Ticket ${res.data.ticket_id} created successfully!`);
@@ -77,8 +93,11 @@ export default function CreateTicket() {
       }, 1200);
     } catch (err) {
       console.error(err);
+
       const message =
-        err.response?.data?.error || "Failed to create ticket. Please try again.";
+        err.response?.data?.error ||
+        "Failed to create ticket. Please try again.";
+
       setServerError(message);
     } finally {
       setSubmitting(false);
@@ -93,6 +112,7 @@ export default function CreateTicket() {
           <Link to="/" className="text-xl font-bold text-gray-800">
             Support CRM
           </Link>
+
           <Link
             to="/"
             className="text-sm text-gray-600 hover:text-gray-800 transition"
@@ -107,8 +127,10 @@ export default function CreateTicket() {
           <h1 className="text-2xl font-bold text-gray-800 mb-1">
             Create a new ticket
           </h1>
+
           <p className="text-sm text-gray-500 mb-6">
-            Fill in the details below. Fields marked with <span className="text-red-500">*</span> are required.
+            Fill in the details below. Fields marked with{" "}
+            <span className="text-red-500">*</span> are required.
           </p>
 
           {success && (
@@ -132,6 +154,7 @@ export default function CreateTicket() {
               >
                 Customer Name <span className="text-red-500">*</span>
               </label>
+
               <input
                 id="customer_name"
                 name="customer_name"
@@ -145,6 +168,7 @@ export default function CreateTicket() {
                     : "border-gray-300 focus:ring-blue-500"
                 }`}
               />
+
               {errors.customer_name && (
                 <p className="text-xs text-red-600 mt-1">
                   {errors.customer_name}
@@ -160,6 +184,7 @@ export default function CreateTicket() {
               >
                 Customer Email <span className="text-red-500">*</span>
               </label>
+
               <input
                 id="customer_email"
                 name="customer_email"
@@ -173,6 +198,7 @@ export default function CreateTicket() {
                     : "border-gray-300 focus:ring-blue-500"
                 }`}
               />
+
               {errors.customer_email && (
                 <p className="text-xs text-red-600 mt-1">
                   {errors.customer_email}
@@ -188,6 +214,7 @@ export default function CreateTicket() {
               >
                 Subject <span className="text-red-500">*</span>
               </label>
+
               <input
                 id="subject"
                 name="subject"
@@ -201,9 +228,39 @@ export default function CreateTicket() {
                     : "border-gray-300 focus:ring-blue-500"
                 }`}
               />
+
               {errors.subject && (
-                <p className="text-xs text-red-600 mt-1">{errors.subject}</p>
+                <p className="text-xs text-red-600 mt-1">
+                  {errors.subject}
+                </p>
               )}
+            </div>
+
+            {/* Priority */}
+            <div className="mb-5">
+              <label
+                htmlFor="priority"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Priority
+              </label>
+
+              <select
+                id="priority"
+                name="priority"
+                value={form.priority}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Low">Low — 48 hours SLA</option>
+                <option value="Medium">Medium — 24 hours SLA</option>
+                <option value="High">High — 8 hours SLA</option>
+                <option value="Urgent">Urgent — 4 hours SLA</option>
+              </select>
+
+              <p className="text-xs text-gray-500 mt-1">
+                SLA hours are counted from ticket creation.
+              </p>
             </div>
 
             {/* Description */}
@@ -214,6 +271,7 @@ export default function CreateTicket() {
               >
                 Description <span className="text-red-500">*</span>
               </label>
+
               <textarea
                 id="description"
                 name="description"
@@ -227,6 +285,7 @@ export default function CreateTicket() {
                     : "border-gray-300 focus:ring-blue-500"
                 }`}
               />
+
               {errors.description && (
                 <p className="text-xs text-red-600 mt-1">
                   {errors.description}
@@ -242,6 +301,7 @@ export default function CreateTicket() {
               >
                 Cancel
               </Link>
+
               <button
                 type="submit"
                 disabled={submitting}
@@ -250,6 +310,7 @@ export default function CreateTicket() {
                 {submitting && (
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 )}
+
                 {submitting ? "Creating..." : "Create Ticket"}
               </button>
             </div>

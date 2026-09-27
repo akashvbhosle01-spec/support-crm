@@ -4,6 +4,8 @@ import api from "../api/axios";
 import Loader from "../components/Loader";
 import EmptyState from "../components/EmptyState";
 import StatusBadge from "../components/StatusBadge";
+import PriorityBadge from "../components/PriorityBadge";
+import OverdueBadge from "../components/OverdueBadge";
 import { formatDate } from "../utils/formatDate";
 
 export default function Home() {
@@ -30,8 +32,14 @@ export default function Home() {
       setError("");
 
       const params = {};
-      if (search.trim()) params.search = search.trim();
-      if (status) params.status = status;
+
+      if (search.trim()) {
+        params.search = search.trim();
+      }
+
+      if (status) {
+        params.status = status;
+      }
 
       const res = await api.get("/tickets", { params });
       setTickets(res.data);
@@ -113,6 +121,7 @@ export default function Home() {
                     <th className="px-4 py-3 font-medium">ID</th>
                     <th className="px-4 py-3 font-medium">Customer</th>
                     <th className="px-4 py-3 font-medium">Subject</th>
+                    <th className="px-4 py-3 font-medium">Priority</th>
                     <th className="px-4 py-3 font-medium">Status</th>
                     <th className="px-4 py-3 font-medium">Date</th>
                   </tr>
@@ -122,27 +131,46 @@ export default function Home() {
                   {tickets.map((t) => (
                     <tr
                       key={t.ticket_id}
-                      onClick={() => navigate(`/tickets/${t.ticket_id}`)}
+                      onClick={() =>
+                        navigate(`/tickets/${t.ticket_id}`)
+                      }
                       className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition"
                     >
+                      {/* Ticket ID */}
                       <td className="px-4 py-3 font-mono text-xs text-blue-600">
                         {t.ticket_id}
                       </td>
 
+                      {/* Customer */}
                       <td className="px-4 py-3 font-medium text-gray-800">
                         {t.customer_name}
                       </td>
 
-                      <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
-                        {t.subject}
+                      {/* Subject + Overdue */}
+                      <td className="px-4 py-3 text-gray-600 max-w-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate">{t.subject}</span>
+
+                          <OverdueBadge
+                            isOverdue={t.is_overdue}
+                            slaDueAt={t.sla_due_at}
+                          />
+                        </div>
                       </td>
 
+                      {/* Priority */}
+                      <td className="px-4 py-3">
+                        <PriorityBadge priority={t.priority} />
+                      </td>
+
+                      {/* Status */}
                       <td className="px-4 py-3">
                         <StatusBadge status={t.status} />
                       </td>
 
+                      {/* Date */}
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                        {formatDate(t.createdAt)}
+                        {formatDate(t.created_at)}
                       </td>
                     </tr>
                   ))}
