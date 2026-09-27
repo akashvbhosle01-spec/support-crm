@@ -7,9 +7,11 @@ import PriorityBadge from "../components/PriorityBadge";
 import OverdueBadge from "../components/OverdueBadge";
 import NotesTimeline from "../components/NotesTimeline";
 import { formatDateTime } from "../utils/formatDate";
+import { useToast } from "../context/ToastContext.jsx";
 
 export default function TicketDetail() {
   const { id } = useParams();
+  const { showToast } = useToast();
 
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,19 +56,25 @@ export default function TicketDetail() {
       setStatusUpdating(true);
       setActionError("");
 
-      await api.put(`/tickets/${id}`, { status: newStatus });
+      await api.put(`/tickets/${id}`, {
+        status: newStatus,
+      });
 
       setTicket((prev) => ({
         ...prev,
         status: newStatus,
         updated_at: new Date().toISOString(),
       }));
+
+      showToast("Ticket status updated", "success");
     } catch (err) {
       console.error(err);
 
       setActionError(
         err.response?.data?.error || "Failed to update status."
       );
+
+      showToast("Failed to update ticket status", "error");
     } finally {
       setStatusUpdating(false);
     }
@@ -87,14 +95,28 @@ export default function TicketDetail() {
 
       await fetchTicket();
       setNoteText("");
+
+      showToast("Note added successfully", "success");
     } catch (err) {
       console.error(err);
 
       setActionError(
         err.response?.data?.error || "Failed to add note."
       );
+
+      showToast("Failed to add note", "error");
     } finally {
       setNoteSubmitting(false);
+    }
+  };
+
+  const handleCopyTicketId = async () => {
+    try {
+      await navigator.clipboard.writeText(ticket.ticket_id);
+      showToast("Ticket ID copied", "info", 1500);
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to copy ticket ID", "error");
     }
   };
 
@@ -144,6 +166,7 @@ export default function TicketDetail() {
           <p className="text-red-600 text-sm">{error}</p>
 
           <button
+            type="button"
             onClick={fetchTicket}
             className="mt-5 text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
@@ -161,7 +184,6 @@ export default function TicketDetail() {
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 py-6">
-
         {/* Action error banner */}
         {actionError && (
           <div className="mb-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
@@ -172,11 +194,35 @@ export default function TicketDetail() {
         {/* Ticket header card */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-
             <div className="min-w-0">
-              <p className="font-mono text-xs text-blue-600 mb-1">
-                {ticket.ticket_id}
-              </p>
+              {/* Ticket ID + Copy Button */}
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-mono text-xs text-blue-600">
+                  {ticket.ticket_id}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleCopyTicketId}
+                  className="text-gray-400 hover:text-gray-600 transition p-0.5 rounded hover:bg-gray-100"
+                  aria-label="Copy ticket ID"
+                  title="Copy ticket ID"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+              </div>
 
               <h1 className="text-xl font-bold text-gray-800 break-words">
                 {ticket.subject}
@@ -254,7 +300,6 @@ export default function TicketDetail() {
           </h2>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-
             <div>
               <p className="text-sm text-gray-800">
                 Due by{" "}
@@ -312,7 +357,6 @@ export default function TicketDetail() {
             </div>
           </form>
         </div>
-
       </main>
     </div>
   );
@@ -322,7 +366,6 @@ function Header() {
   return (
     <header className="bg-white border-b border-gray-200">
       <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-
         <Link
           to="/"
           className="text-xl font-bold text-gray-800"
@@ -336,7 +379,6 @@ function Header() {
         >
           ← Back to tickets
         </Link>
-
       </div>
     </header>
   );

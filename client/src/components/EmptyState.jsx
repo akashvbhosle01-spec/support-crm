@@ -1,6 +1,9 @@
-export default function EmptyState({ title = "No tickets found", subtitle }) {
+import { Link } from "react-router-dom";
+
+export default function EmptyState({ title, subtitle, action }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
+      {/* Icon */}
       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
         <svg
           className="w-8 h-8 text-gray-400"
@@ -17,10 +20,23 @@ export default function EmptyState({ title = "No tickets found", subtitle }) {
         </svg>
       </div>
 
-      <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+      {/* Title */}
+      <h3 className="text-lg font-semibold text-gray-800">
+        {title}
+      </h3>
 
+      {/* Subtitle */}
       {subtitle && (
-        <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+        <p className="text-sm text-gray-500 mt-1">
+          {subtitle}
+        </p>
+      )}
+
+      {/* Action */}
+      {action && (
+        <div className="mt-5">
+          {action}
+        </div>
       )}
     </div>
   );

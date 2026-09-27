@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import Loader from "../components/Loader";
 import EmptyState from "../components/EmptyState";
+import TicketSkeleton from "../components/TicketSkeleton";
 import StatusBadge from "../components/StatusBadge";
 import PriorityBadge from "../components/PriorityBadge";
 import OverdueBadge from "../components/OverdueBadge";
@@ -42,21 +42,27 @@ export default function Home() {
       }
 
       const res = await api.get("/tickets", { params });
+
       setTickets(res.data);
     } catch (err) {
       console.error(err);
-      setError("Failed to load tickets. Please check your connection.");
+      setError(
+        "Failed to load tickets. Please check your connection."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 animate-fade-in">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-gray-800">
+          <Link
+            to="/"
+            className="text-xl font-bold text-gray-800"
+          >
             Support CRM
           </Link>
 
@@ -72,14 +78,60 @@ export default function Home() {
       <main className="max-w-6xl mx-auto px-4 py-6">
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
-          <input
-            type="text"
-            placeholder="Search by ID, name, email, subject..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
+          {/* Search */}
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </span>
 
+            {/* Search Input */}
+            <input
+              type="text"
+              placeholder="Search by ID, name, email, subject..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+
+            {/* Clear Search Button */}
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition"
+                aria-label="Clear search"
+                title="Clear search"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter */}
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -94,14 +146,17 @@ export default function Home() {
 
         {/* Content */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          {loading && <Loader message="Loading tickets..." />}
+          {/* Skeleton Loading */}
+          {loading && <TicketSkeleton />}
 
+          {/* Error */}
           {!loading && error && (
             <div className="p-6 text-center text-red-600 text-sm">
               {error}
             </div>
           )}
 
+          {/* Empty State */}
           {!loading && !error && tickets.length === 0 && (
             <EmptyState
               title="No tickets found"
@@ -113,6 +168,7 @@ export default function Home() {
             />
           )}
 
+          {/* Ticket Table */}
           {!loading && !error && tickets.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -149,7 +205,9 @@ export default function Home() {
                       {/* Subject + Overdue */}
                       <td className="px-4 py-3 text-gray-600 max-w-xs">
                         <div className="flex items-center gap-2">
-                          <span className="truncate">{t.subject}</span>
+                          <span className="truncate">
+                            {t.subject}
+                          </span>
 
                           <OverdueBadge
                             isOverdue={t.is_overdue}

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import { useToast } from "../context/ToastContext.jsx";
 
 export default function CreateTicket() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [form, setForm] = useState({
     customer_name: "",
@@ -15,8 +17,6 @@ export default function CreateTicket() {
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [serverError, setServerError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,7 +26,6 @@ export default function CreateTicket() {
       [name]: value,
     }));
 
-    // Clear field-specific error as user types
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -59,18 +58,17 @@ export default function CreateTicket() {
     if (!form.description.trim()) {
       newErrors.description = "Description is required";
     } else if (form.description.trim().length < 10) {
-      newErrors.description = "Description must be at least 10 characters";
+      newErrors.description =
+        "Description must be at least 10 characters";
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    setServerError("");
-    setSuccess("");
 
     if (!validate()) return;
 
@@ -85,12 +83,12 @@ export default function CreateTicket() {
         priority: form.priority,
       });
 
-      setSuccess(`Ticket ${res.data.ticket_id} created successfully!`);
+      showToast(
+        `Ticket ${res.data.ticket_id} created`,
+        "success"
+      );
 
-      // Redirect after a short delay so user sees the success message
-      setTimeout(() => {
-        navigate("/");
-      }, 1200);
+      navigate("/");
     } catch (err) {
       console.error(err);
 
@@ -98,7 +96,7 @@ export default function CreateTicket() {
         err.response?.data?.error ||
         "Failed to create ticket. Please try again.";
 
-      setServerError(message);
+      showToast(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -109,7 +107,10 @@ export default function CreateTicket() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-gray-800">
+          <Link
+            to="/"
+            className="text-xl font-bold text-gray-800"
+          >
             Support CRM
           </Link>
 
@@ -122,6 +123,7 @@ export default function CreateTicket() {
         </div>
       </header>
 
+      {/* Main */}
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8">
           <h1 className="text-2xl font-bold text-gray-800 mb-1">
@@ -133,18 +135,6 @@ export default function CreateTicket() {
             <span className="text-red-500">*</span> are required.
           </p>
 
-          {success && (
-            <div className="mb-5 rounded-md bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3">
-              ✅ {success}
-            </div>
-          )}
-
-          {serverError && (
-            <div className="mb-5 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
-              ⚠️ {serverError}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} noValidate>
             {/* Customer Name */}
             <div className="mb-5">
@@ -152,7 +142,8 @@ export default function CreateTicket() {
                 htmlFor="customer_name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Customer Name <span className="text-red-500">*</span>
+                Customer Name{" "}
+                <span className="text-red-500">*</span>
               </label>
 
               <input
@@ -182,7 +173,8 @@ export default function CreateTicket() {
                 htmlFor="customer_email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Customer Email <span className="text-red-500">*</span>
+                Customer Email{" "}
+                <span className="text-red-500">*</span>
               </label>
 
               <input
@@ -212,7 +204,8 @@ export default function CreateTicket() {
                 htmlFor="subject"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Subject <span className="text-red-500">*</span>
+                Subject{" "}
+                <span className="text-red-500">*</span>
               </label>
 
               <input
@@ -252,10 +245,21 @@ export default function CreateTicket() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="Low">Low — 48 hours SLA</option>
-                <option value="Medium">Medium — 24 hours SLA</option>
-                <option value="High">High — 8 hours SLA</option>
-                <option value="Urgent">Urgent — 4 hours SLA</option>
+                <option value="Low">
+                  Low — 48 hours SLA
+                </option>
+
+                <option value="Medium">
+                  Medium — 24 hours SLA
+                </option>
+
+                <option value="High">
+                  High — 8 hours SLA
+                </option>
+
+                <option value="Urgent">
+                  Urgent — 4 hours SLA
+                </option>
               </select>
 
               <p className="text-xs text-gray-500 mt-1">
@@ -269,7 +273,8 @@ export default function CreateTicket() {
                 htmlFor="description"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Description <span className="text-red-500">*</span>
+                Description{" "}
+                <span className="text-red-500">*</span>
               </label>
 
               <textarea
@@ -311,7 +316,9 @@ export default function CreateTicket() {
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 )}
 
-                {submitting ? "Creating..." : "Create Ticket"}
+                {submitting
+                  ? "Creating..."
+                  : "Create Ticket"}
               </button>
             </div>
           </form>
